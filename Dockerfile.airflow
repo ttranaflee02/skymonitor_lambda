@@ -1,0 +1,23 @@
+FROM apache/airflow:2.7.0-python3.9
+
+# Switch to root to install system packages
+USER root
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Switch back to airflow user for pip install
+USER airflow
+
+# Install Python dependencies from requirements.txt
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir --user -r /tmp/requirements.txt
+
+# Add src to PYTHONPATH
+ENV PYTHONPATH=/opt/airflow:/opt/airflow/src:$PYTHONPATH
+
+# Set working directory
+WORKDIR /opt/airflow

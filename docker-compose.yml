@@ -27,7 +27,9 @@ services:
       - kafka_data:/var/lib/kafka/data
 
   spark-master:
-    image: apache/spark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
     environment:
       - SPARK_MODE=master
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
@@ -35,11 +37,18 @@ services:
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
       - SPARK_USER=spark
+      - PYTHONPATH=/opt/spark/src:$PYTHONPATH
     ports:
       - '8080:8080'
+    volumes:
+      - ./src:/opt/spark/src
 
   spark-worker:
-    image: apache/spark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
+    depends_on:
+      - spark-master
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark:7077
@@ -50,6 +59,9 @@ services:
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
       - SPARK_USER=spark
+      - PYTHONPATH=/opt/spark/src:$PYTHONPATH
+    volumes:
+      - ./src:/opt/spark/src
 
   minio:
     image: minio/minio:latest
@@ -102,32 +114,44 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5435:5432"
 
   airflow-webserver:
-    image: apache/airflow:2.7.0
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
     depends_on:
       - airflow-postgres
     environment:
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__UNIT_TEST_MODE: "true"
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      PYTHONPATH: /opt/airflow:/opt/airflow/src:$PYTHONPATH
     ports:
       - "8888:8080"
     volumes:
       - ./src/orchestration/dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./.env:/opt/airflow/.env
     command: sh -c "airflow db upgrade && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true && airflow webserver"
 
   airflow-scheduler:
-    image: apache/airflow:2.7.0
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
     depends_on:
       - airflow-postgres
     environment:
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__UNIT_TEST_MODE: "true"
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      PYTHONPATH: /opt/airflow:/opt/airflow/src:$PYTHONPATH
     volumes:
       - ./src/orchestration/dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./.env:/opt/airflow/.env
     command: sh -c "airflow scheduler"
 
 volumes:
