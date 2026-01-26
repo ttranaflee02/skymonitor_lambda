@@ -8,7 +8,7 @@ A Lambda Architecture system for flight tracking using OpenSky API, Kafka, Spark
 
 ### 1. Clone & Setup
 ```bash
-git clone https://github.com/yourname/skymonitor.git
+git clone https://github.com/ttranaflee02/skymonitor.git
 cd skymonitor
 cp .env.example .env
 ```
