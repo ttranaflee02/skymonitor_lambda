@@ -127,14 +127,23 @@ services:
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__CORE__UNIT_TEST_MODE: "true"
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW__WEBSERVER__SECRET_KEY: this_is_a_secret_key_for_development_only_change_in_production
       PYTHONPATH: /opt/airflow:/opt/airflow/src:$PYTHONPATH
+      _AIRFLOW_DB_UPGRADE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+      _AIRFLOW_WWW_USER_FIRSTNAME: Admin
+      _AIRFLOW_WWW_USER_LASTNAME: User
+      _AIRFLOW_WWW_USER_EMAIL: admin@example.com
+      _AIRFLOW_WWW_USER_ROLE: Admin
     ports:
       - "8888:8080"
     volumes:
       - ./src/orchestration/dags:/opt/airflow/dags
       - ./src:/opt/airflow/src
       - ./.env:/opt/airflow/.env
-    command: sh -c "airflow db upgrade && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true && airflow webserver"
+    command: webserver
 
   airflow-scheduler:
     build:
@@ -147,12 +156,13 @@ services:
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__CORE__UNIT_TEST_MODE: "true"
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW__WEBSERVER__SECRET_KEY: this_is_a_secret_key_for_development_only_change_in_production
       PYTHONPATH: /opt/airflow:/opt/airflow/src:$PYTHONPATH
     volumes:
       - ./src/orchestration/dags:/opt/airflow/dags
       - ./src:/opt/airflow/src
       - ./.env:/opt/airflow/.env
-    command: sh -c "airflow scheduler"
+    command: scheduler
 
 volumes:
   zk_data:

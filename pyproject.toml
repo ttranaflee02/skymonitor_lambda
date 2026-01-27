@@ -3,7 +3,7 @@ name = "skymonitor-lambda"
 version = "0.1.0"
 description = "Lambda Architecture system for real-time flight tracking"
 readme = "README.md"
-requires-python = ">=3.11.3"
+requires-python = "==3.11.3"
 dependencies = [
     "kafka-python-ng",
     "pyspark==3.5.0",

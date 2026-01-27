@@ -9,7 +9,7 @@ from requests.auth import HTTPBasicAuth
 
 # New Imports
 import sys
-sys.path.append("/Users/tranlephuongthao/Documents/MSc_Data_Science/big data/skymonitor_lambda/")
+# sys.path.append("/Users/tranlephuongthao/Documents/MSc_Data_Science/big data/skymonitor_lambda/")
 from src.common.config import Config
 from src.common.models import FlightState
 from src.utils.logging import setup_logger
@@ -35,7 +35,7 @@ class OpenSkyFlightProducer:
             logger.info("Using authenticated OpenSky REST API access")
         else:
             logger.warning("No OpenSky credentials found, using anonymous access (heavy rate limits)")
-
+        # logger.warning(self.auth)
     def _init_kafka(self):
         from kafka import KafkaProducer
         try:
@@ -54,16 +54,19 @@ class OpenSkyFlightProducer:
     def fetch_flight_data(self) -> Optional[List[FlightState]]:
         """Fetch states from OpenSky REST API and convert to a list of FlightState objects."""
         try:
-            response = requests.get(self.api_url, auth=self.auth, timeout=30)
-            
+            # response = requests.get(self.api_url, auth=self.auth, timeout=30)
+            url = "https://opensky-network.org/api/states/all"
+
+            response = requests.get(url, timeout=30)
+
             if response.status_code == 429:
                 retry_after = response.headers.get('Retry-After', 'unknown')
                 logger.error(f"OpenSky API Rate Limit hit (429). Retry-After: {retry_after}")
                 return None
-                
-            response.raise_for_status()
-            data = response.json()
             
+            # response.raise_for_status()
+            data = response.json()
+            logger.info(data)
             states = data.get('states')
             if not states:
                 return None
@@ -96,6 +99,8 @@ class OpenSkyFlightProducer:
                 flight_states.append(state)
             return flight_states
         except requests.exceptions.HTTPError as e:
+            import traceback
+            traceback.print_exc()
             logger.error(f"HTTP Error fetching data: {e}")
             return None
         except Exception as e:
@@ -114,6 +119,7 @@ class OpenSkyFlightProducer:
     
     def persist_to_minio(self, messages: List[FlightState]) -> None:
         if not messages:
+            logger.debug(f'there are {len(messages)}')
             return
         
         now = datetime.now(timezone.utc)
