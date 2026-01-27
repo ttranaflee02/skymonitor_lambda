@@ -1,0 +1,45 @@
+FROM apache/spark:latest
+
+# Switch to root to install system packages
+USER root
+
+# Install Python and pip
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-dev \
+    wget \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create directory for source code
+RUN mkdir -p /opt/spark/src
+
+# Install Python dependencies
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+
+# Download Elasticsearch connector for Spark
+RUN wget -q -O /opt/spark/jars/elasticsearch-spark-connector_2.12-8.10.2.jar \
+    https://repo1.maven.org/maven2/org/elasticsearch/elasticsearch-hadoop/8.10.2/elasticsearch-hadoop-8.10.2.jar
+
+# Download MongoDB connector for Spark
+RUN wget -q -O /opt/spark/jars/mongo-spark-connector_2.12-3.0.0.jar \
+    https://repo1.maven.org/maven2/org/mongodb/spark/mongo-spark-connector_2.12/3.0.0/mongo-spark-connector_2.12-3.0.0.jar
+
+# Download Hadoop AWS client for S3a (MinIO) support
+RUN wget -q -O /opt/spark/jars/hadoop-aws-3.3.4.jar \
+    https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar && \
+    wget -q -O /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar \
+    https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar
+
+# Switch back to spark user (the default user in the Spark image)
+USER spark
+
+# Set working directory
+WORKDIR /opt/spark
+
+# Set environment variables
+ENV PYTHONPATH=/opt/spark/src:$PYTHONPATH
+ENV SPARK_HOME=/opt/spark

@@ -34,16 +34,23 @@ class FlightBatchAnalytics:
         parts = date_str.split("-")
         year, month, day = parts[0], parts[1], parts[2]
         s3_path = f"s3a://{Config.MINIO_BUCKET}/{year}/{month}/{day}/*/*.json"
-        
+
         logger.info(f"Reading from: {s3_path}")
-        
+
         try:
             df = self.spark.read.option("multiline", "true").json(s3_path)
-            logger.info(f"Loaded {df.count()} records")
+            count = df.count()
+            logger.info(f"Loaded {count} records")
             return df
         except Exception as e:
             logger.error(f"Error reading MinIO: {e}")
-            return self.spark.createDataFrame([], self.spark.sparkContext.parallelize([]).toDF().schema)
+            # Return empty DataFrame with the same schema as expected
+            from pyspark.sql.types import StructType, StructField, StringType, TimestampType
+            empty_schema = StructType([
+                StructField("time", StringType(), nullable=True),
+                StructField("states", StringType(), nullable=True),
+            ])
+            return self.spark.createDataFrame([], empty_schema)
     
     def flatten_flight_states(self, df: DataFrame) -> DataFrame:
         """Flatten states array from raw API response."""

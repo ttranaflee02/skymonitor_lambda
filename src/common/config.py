@@ -5,8 +5,8 @@ load_dotenv()
 
 class Config:
     # OpenSky API
-    OPENSKY_USERNAME = os.getenv("OPENSKY_USERNAME", "")
-    OPENSKY_PASSWORD = os.getenv("OPENSKY_PASSWORD", "")
+    OPENSKY_USERNAME = "duclh19-api-client"
+    OPENSKY_PASSWORD = "iiqNWjnGOrZVc19nHJ9eYRwwg0QTnfcH"
     OPENSKY_API_URL = "https://opensky-network.org/api/states/all"
     POLL_INTERVAL_SECONDS = 15
 
